@@ -1,36 +1,63 @@
 import React, { useEffect, useState } from 'react';
+import { supabase } from './lib/supabase';
+import type { Session } from '@supabase/supabase-js'; // FIXED: Added 'type' keyword
+import Login from './components/Login';
 import KPICards from './components/KPICards';
 import WorldMap from './components/WorldMap';
 import SignalTable from './components/SignalTable';
 import ProjectDrawer from './components/ProjectDrawer';
 import type { Project, Stats } from './types';
-import { fetchProjects, fetchStats } from './services/supabaseService';
+import { fetchProjects, fetchStats, signOut } from './services/supabaseService';
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  
+  // Data State
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [filterCountry, setFilterCountry] = useState<string | null>(null);
 
+  // 1. Handle Authentication Session
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [projectsData, statsData] = await Promise.all([
-          fetchProjects(),
-          fetchStats()
-        ]);
-        setProjects(projectsData);
-        setStats(statsData);
-      } catch (error) {
-        console.error("Failed to load data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setSessionLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // 2. Fetch Data when Session exists
+  useEffect(() => {
+    if (session) {
+      const loadData = async () => {
+        try {
+          setLoadingData(true);
+          // Fetch projects first
+          const projectsData = await fetchProjects();
+          setProjects(projectsData);
+          
+          // Calculate stats based on fetched projects
+          const statsData = await fetchStats(projectsData);
+          setStats(statsData);
+        } catch (error) {
+          console.error("Failed to load data", error);
+        } finally {
+          setLoadingData(false);
+        }
+      };
+      loadData();
+    }
+  }, [session]);
 
   const displayedProjects = filterCountry 
     ? projects.filter(p => p.country === filterCountry)
@@ -44,26 +71,31 @@ const App: React.FC = () => {
     setSelectedProject(project);
   };
 
-  if (loading) {
+  const handleSignOut = async () => {
+    await signOut();
+    setProjects([]);
+    setStats(null);
+  };
+
+  // 3. Render Logic
+
+  if (sessionLoading) {
     return (
-      <div 
-        style={{ 
-          height: '100vh', 
-          width: '100vw', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#f8fafc',
-          color: '#475569'
-        }}
-      >
-        <div className="flex flex-col items-center gap-4">
-           {/* Fallback inline styles in case Tailwind fails */}
-           <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-             Initializing Intelligence Grid...
-           </div>
-           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500"></div>
-        </div>
+      <div className="h-screen w-screen flex items-center justify-center bg-[#f8fafc]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login />;
+  }
+
+  if (loadingData && projects.length === 0) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#f8fafc] text-slate-600 gap-4">
+        <div className="text-lg font-semibold">Loading Intelligence Grid...</div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500"></div>
       </div>
     );
   }
@@ -84,12 +116,21 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-            <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#bef264]"></span>
-            </span>
-            <span className="text-xs font-semibold text-gray-600">Live Data</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#bef264]"></span>
+              </span>
+              <span className="text-xs font-semibold text-gray-600">Live Data</span>
+            </div>
+            
+            <button 
+              onClick={handleSignOut}
+              className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </header>
