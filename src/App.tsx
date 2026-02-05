@@ -5,7 +5,6 @@ import SignalTable from './components/SignalTable';
 import ProjectDrawer from './components/ProjectDrawer';
 import type { Project, Stats } from './types';
 import { fetchProjects, fetchStats } from './services/supabaseService';
-import { Search } from './components/Icons';
 
 const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -14,10 +13,10 @@ const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [filterCountry, setFilterCountry] = useState<string | null>(null);
 
-  // Load Initial Data
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
         const [projectsData, statsData] = await Promise.all([
           fetchProjects(),
           fetchStats()
@@ -33,7 +32,6 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Filter projects based on map selection
   const displayedProjects = filterCountry 
     ? projects.filter(p => p.country === filterCountry)
     : projects;
@@ -46,14 +44,35 @@ const App: React.FC = () => {
     setSelectedProject(project);
   };
 
+  if (loading) {
+    return (
+      <div 
+        style={{ 
+          height: '100vh', 
+          width: '100vw', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
+          color: '#475569'
+        }}
+      >
+        <div className="flex flex-col items-center gap-4">
+           {/* Fallback inline styles in case Tailwind fails */}
+           <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+             Initializing Intelligence Grid...
+           </div>
+           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col relative">
-      
-      {/* Navigation Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-             {/* Logo Icon */}
             <div className="bg-[#bef264] p-2.5 rounded-xl shadow-sm border border-lime-200">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-lime-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -75,30 +94,19 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500"></div>
-          </div>
-        ) : (
-          <>
-            {stats && <KPICards stats={stats} />}
-            <WorldMap 
-              projects={projects} 
-              onCountryClick={handleCountryClick} 
-              selectedCountry={filterCountry}
-            />
-            <SignalTable 
-              projects={displayedProjects}
-              onProjectSelect={handleProjectSelect}
-            />
-          </>
-        )}
+        {stats && <KPICards stats={stats} />}
+        <WorldMap 
+          projects={projects} 
+          onCountryClick={handleCountryClick} 
+          selectedCountry={filterCountry}
+        />
+        <SignalTable 
+          projects={displayedProjects}
+          onProjectSelect={handleProjectSelect}
+        />
       </main>
 
-      {/* Slide Over Drawer */}
-      {/* Overlay */}
       {selectedProject && (
         <div 
           className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 transition-opacity"
@@ -106,7 +114,6 @@ const App: React.FC = () => {
         />
       )}
       
-      {/* Drawer Panel */}
       <div className={`fixed inset-y-0 right-0 w-full md:w-[480px] bg-white z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${selectedProject ? 'translate-x-0' : 'translate-x-full'}`}>
         <ProjectDrawer 
           project={selectedProject} 

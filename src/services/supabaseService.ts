@@ -1,10 +1,7 @@
-import { Project, Score, Stats } from '../types';
+import { Score } from '../types';
+import type { Project, Stats } from '../types';
 
-// NOTE: In a real scenario, you would import createClient from @supabase/supabase-js
-// import { createClient } from '@supabase/supabase-js';
-// const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
-// Mock Data to match the screenshots exactly
+// MOCK DATA
 const MOCK_PROJECTS: Project[] = [
   {
     id: '1',
@@ -61,85 +58,63 @@ const MOCK_PROJECTS: Project[] = [
     published_date: 'Jan 8, 2024',
     est_value: '$12B',
     build_phase: 'Feasibility',
-    operator: 'Woodside Energy',
+    operator: 'Woodside',
     contractor: 'KBR',
-    description: 'Development of the Brecknock, Calliance and Torosa fields using Floating LNG technology.',
-    opportunity: 'Cryogenic insulation materials and large-scale heat exchangers.'
+    description: 'Floating LNG facility development off the coast of Western Australia.',
+    opportunity: 'Cryogenic insulation and marine-grade protective coatings.'
   },
   {
     id: '5',
-    name: 'Coral South Expansion',
-    country: 'Mozambique',
-    region: 'Africa',
-    asset_type: 'LNG Terminal',
+    name: 'North Sea Wind-to-Hydrogen',
+    country: 'United Kingdom',
+    region: 'Europe',
+    asset_type: 'Green Hydrogen',
     score: Score.MEDIUM,
-    published_date: 'Jan 5, 2024',
-    est_value: '$4.2B',
+    published_date: 'Jan 20, 2024',
+    est_value: '$3.1B',
     build_phase: 'Pre-FEED',
-    operator: 'Eni',
-    contractor: 'Saipem',
-    description: 'Second phase of the Coral South project to increase LNG export capacity.',
-    opportunity: 'Marine logistics services and specialized drilling fluids.'
+    operator: 'BP',
+    contractor: 'Aker Solutions',
+    description: 'Integration of offshore wind farms with electrolysis plants for green hydrogen production.',
+    opportunity: 'Electrolyzer components and hydrogen-compatible pipeline materials.'
   },
   {
     id: '6',
-    name: 'Rosebank Field',
-    country: 'United Kingdom',
-    region: 'Europe',
-    asset_type: 'FPSO',
-    score: Score.MEDIUM,
-    published_date: 'Jan 2, 2024',
-    est_value: '$3.8B',
-    build_phase: 'Approval',
-    operator: 'Equinor',
-    contractor: 'Aker Solutions',
-    description: 'Development of the Rosebank oil and gas field west of Shetland.',
-    opportunity: 'Subsea umbilical, risers and flowlines (SURF) packages.'
-  },
-  {
-    id: '7',
-    name: 'Johan Castberg',
-    country: 'Norway',
-    region: 'Europe',
-    asset_type: 'FPSO',
-    score: Score.LOW,
-    published_date: 'Dec 28, 2023',
-    est_value: '$6B',
+    name: 'Qatar LNG Train 5',
+    country: 'Qatar',
+    region: 'Middle East',
+    asset_type: 'LNG Plant',
+    score: Score.HIGH,
+    published_date: 'Jan 22, 2024',
+    est_value: '$8.5B',
     build_phase: 'Construction',
-    operator: 'Equinor',
-    contractor: 'Aker Solutions',
-    description: 'Large scale development in the Barents Sea.',
-    opportunity: 'Maintenance and operational support services.'
+    operator: 'QatarEnergy',
+    contractor: 'Chiyoda / Technip',
+    description: 'Expansion of the North Field East project with an additional LNG train.',
+    opportunity: 'Specialized cryogenic valves and large-scale heat exchangers.'
   }
 ];
 
 const MOCK_STATS: Stats = {
-  early_stage_count: 5,
-  top_epc: 'TechnipFMC',
-  top_epc_desc: 'Most active contractor',
-  lead_region: 'South America',
-  lead_region_desc: 'Highest project count'
+  early_stage_count: 142,
+  top_epc_name: 'TechnipFMC',
+  top_epc_value: '$4.2B',
+  active_regions: 6
+};
+
+// SIMULATE API CALLS
+export const fetchProjects = async (): Promise<Project[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(MOCK_PROJECTS);
+    }, 800);
+  });
 };
 
 export const fetchStats = async (): Promise<Stats> => {
-  // Simulate network delay
   return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_STATS), 500);
+    setTimeout(() => {
+      resolve(MOCK_STATS);
+    }, 800);
   });
-  
-  // Real Supabase implementation:
-  // const { data, error } = await supabase.from('stats').select('*').single();
-  // if (error) throw error;
-  // return data;
-};
-
-export const fetchProjects = async (): Promise<Project[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_PROJECTS), 600);
-  });
-  
-  // Real Supabase implementation:
-  // const { data, error } = await supabase.from('projects').select('*');
-  // if (error) throw error;
-  // return data;
 };

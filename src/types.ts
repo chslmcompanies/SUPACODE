@@ -1,8 +1,10 @@
-export enum Score {
-  HIGH = 'High',
-  MEDIUM = 'Medium',
-  LOW = 'Low'
-}
+export const Score = {
+  HIGH: 'High',
+  MEDIUM: 'Medium',
+  LOW: 'Low'
+} as const;
+
+export type Score = typeof Score[keyof typeof Score];
 
 export interface Project {
   id: string;
@@ -18,20 +20,11 @@ export interface Project {
   contractor: string;
   description: string;
   opportunity: string;
-  coordinates?: { x: number; y: number }; // For map placement if needed, or country mapping
 }
 
 export interface Stats {
   early_stage_count: number;
-  top_epc: string;
-  top_epc_desc: string;
-  lead_region: string;
-  lead_region_desc: string;
-}
-
-export interface CountryPath {
-  id: string;
-  name: string;
-  path: string;
-  viewBox?: string;
+  top_epc_name: string;
+  top_epc_value: string;
+  active_regions: number;
 }
