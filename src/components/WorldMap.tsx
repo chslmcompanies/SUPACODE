@@ -5,6 +5,7 @@ import {
   Geography,
   ZoomableGroup
 } from "react-simple-maps";
+import { Globe, RotateCcw, Activity } from "lucide-react";
 import { Score } from '../types';
 import type { Project } from '../types';
 import { CountryTooltip } from './CountryTooltip';
@@ -16,6 +17,8 @@ interface WorldMapProps {
   onCountryClick: (country: string | null) => void;
   selectedCountry: string | null;
 }
+
+// --- 1. CONFIGURATION ---
 
 // Map configuration for "Smart Zoom"
 const zoomPositions: Record<string, { coordinates: [number, number]; zoom: number }> = {
@@ -45,7 +48,9 @@ const mapNameMapping: Record<string, string> = {
   "Great Britain": "United Kingdom",
 };
 
-const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedCountry }) => {
+export function WorldMap({ projects, onCountryClick, selectedCountry }: WorldMapProps) {
+  // --- 2. STATE & DATA AGGREGATION ---
+  
   const [tooltipData, setTooltipData] = useState<{
     data: { name: string; score: Score; projects: Project[] };
     position: { x: number; y: number };
@@ -56,7 +61,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedC
     zoom: 1
   });
 
-  // 1. Aggregate Project Data
+  // Aggregate Project Data
   const countryData = useMemo(() => {
     const data: Record<string, { name: string; score: Score; projects: Project[] }> = {};
     
@@ -87,40 +92,31 @@ const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedC
     return mapNameMapping[rawName] || rawName;
   };
 
-  // 2. Styling Logic - INCREASED CONTRAST
+  // --- 3. STYLING LOGIC ---
+
   const getFillColor = useCallback((geo: any): string => {
     const name = getCountryNameFromGeo(geo);
     const data = countryData[name];
     const isSelected = selectedCountry === name;
 
     if (!data) {
-      // Darker grey for empty countries so they stand out from the water
-      return "#e2e8f0"; // slate-200
+      return "hsl(220, 14%, 92%)"; // Default muted color for empty countries
     }
 
-    if (isSelected) {
-      return data.score === Score.HIGH ? '#15803d' : // green-700
-             data.score === Score.MEDIUM ? '#ca8a04' : // yellow-600
-             '#475569'; // slate-600
+    // Colors matched to the new Header Legend (Emerald/Amber/Slate)
+    switch (data.score) {
+      case Score.HIGH:
+        return isSelected ? "hsl(142, 71%, 45%)" : "hsl(142, 71%, 50%)"; // Emerald
+      case Score.MEDIUM:
+        return isSelected ? "hsl(45, 93%, 50%)" : "hsl(45, 93%, 55%)";   // Amber
+      case Score.LOW:
+      default:
+        return isSelected ? "hsl(220, 14%, 60%)" : "hsl(220, 14%, 70%)"; // Slate
     }
-
-    return data.score === Score.HIGH ? '#22c55e' : // green-500
-           data.score === Score.MEDIUM ? '#eab308' : // yellow-500
-           '#94a3b8'; // slate-400
   }, [countryData, selectedCountry]);
 
-  const getStrokeColor = useCallback((geo: any): string => {
-    const name = getCountryNameFromGeo(geo);
-    const hasData = !!countryData[name];
+  // --- 4. EVENT HANDLERS ---
 
-    // If it has data, use white to pop against the color
-    if (hasData) return "#ffffff";
-    
-    // If empty, use a visible grey border to define the coastline
-    return "#cbd5e1"; // slate-300
-  }, [countryData]);
-
-  // 3. Event Handlers
   const handleMouseEnter = useCallback((geo: any, event: React.MouseEvent) => {
     const name = getCountryNameFromGeo(geo);
     if (countryData[name]) {
@@ -153,6 +149,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedC
         setPosition({ coordinates: [0, 20], zoom: 1 });
       } else {
         onCountryClick(name);
+        // Use your smart zoom positions
         const targetPos = zoomPositions[name] || { coordinates: [0, 0], zoom: 2 };
         if (zoomPositions[name]) {
             setPosition(targetPos);
@@ -161,65 +158,128 @@ const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedC
         }
       }
     } else {
+      // Allow clicking empty oceans/countries to reset
       onCountryClick(null);
       setPosition({ coordinates: [0, 20], zoom: 1 });
     }
   }, [countryData, selectedCountry, onCountryClick]);
 
+  const handleResetView = useCallback(() => {
+    onCountryClick(null);
+    setPosition({ coordinates: [0, 20], zoom: 1 });
+  }, [onCountryClick]);
+
+  const handleMoveEnd = useCallback((position: { coordinates: [number, number]; zoom: number }) => {
+    setPosition(position);
+  }, []);
+
+  // --- 5. RENDER ---
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8 overflow-hidden relative h-[500px]">
-      <ComposableMap 
+    <div className="relative w-full h-[500px] bg-slate-50/50 rounded-3xl overflow-hidden border border-slate-200/60 shadow-sm mb-8" onMouseMove={handleMouseMove}>
+      
+      {/* --- Floating Glass Header --- */}
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10 pointer-events-none">
+        
+        {/* Left: Title & Context */}
+        <div className="glass-card px-4 py-3 flex items-center gap-3 pointer-events-auto shadow-sm bg-white/80 backdrop-blur-md rounded-xl border border-white/20">
+          <div className="p-2 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <Globe className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+              Global Activity
+              <Activity className="w-3 h-3 text-slate-400" />
+            </h3>
+            <p className="text-[11px] font-medium text-slate-500">Real-time project distribution</p>
+          </div>
+        </div>
+
+        {/* Right: Legend & Controls */}
+        <div className="flex flex-col items-end gap-2 pointer-events-auto">
+          {/* Legend Bar */}
+          <div className="glass-card px-5 py-2.5 flex items-center gap-6 shadow-sm bg-white/80 backdrop-blur-md rounded-xl border border-white/20">
+             <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium text-slate-600">High</span>
+             </div>
+             <div className="w-px h-3 bg-slate-200" /> {/* Divider */}
+             <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400 border border-amber-400/50"></span>
+                <span className="text-xs font-medium text-slate-600">Medium</span>
+             </div>
+             <div className="w-px h-3 bg-slate-200" /> {/* Divider */}
+             <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-400 border border-slate-400/50"></span>
+                <span className="text-xs font-medium text-slate-600">Low</span>
+             </div>
+          </div>
+
+          {/* Conditional Reset Button */}
+          {selectedCountry && (
+            <button
+              onClick={handleResetView}
+              className="glass-card px-4 py-2 flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-red-50/80 hover:border-red-200 transition-all duration-300 group shadow-sm bg-white/80 backdrop-blur-md rounded-xl border border-white/20"
+            >
+              <RotateCcw className="w-3.5 h-3.5 group-hover:-rotate-180 transition-transform duration-500" />
+              Reset View
+            </button>
+          )}
+        </div>
+      </div>
+
+      <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ 
-          scale: 130, // Restored to 130 for perfect size
-          center: [0, 20] 
-        }} 
-        width={800} 
-        height={450}
-        onMouseMove={handleMouseMove}
-        className="w-full h-full bg-[#f8fafc]" // Slate-50 Water
+        projectionConfig={{
+          scale: 130,
+          center: [0, 20]
+        }}
+        className="w-full h-full"
       >
-        <ZoomableGroup 
-           center={position.coordinates} 
-           zoom={position.zoom}
-           onMoveEnd={(pos: { coordinates: [number, number]; zoom: number }) => setPosition(pos)}
-           minZoom={1}
-           maxZoom={8}
+        <ZoomableGroup
+          center={position.coordinates}
+          zoom={position.zoom}
+          onMoveEnd={handleMoveEnd}
+          minZoom={1}
+          maxZoom={8}
         >
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
                 const name = getCountryNameFromGeo(geo);
                 const hasData = !!countryData[name];
-
+                
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => handleClick(geo)}
-                    onMouseEnter={(e) => handleMouseEnter(geo, e)}
-                    onMouseLeave={handleMouseLeave}
                     style={{
                       default: {
                         fill: getFillColor(geo),
+                        stroke: "hsl(220, 13%, 85%)",
+                        strokeWidth: 0.5,
                         outline: "none",
-                        stroke: getStrokeColor(geo),
-                        strokeWidth: hasData ? 1 : 0.5,
-                        transition: "all 300ms ease"
+                        transition: "all 0.2s ease"
                       },
                       hover: {
-                        fill: hasData ? "#1e293b" : "#cbd5e1", // dark slate vs mid slate
+                        fill: hasData ? getFillColor(geo) : "hsl(220, 14%, 88%)",
+                        stroke: hasData ? "hsl(174, 60%, 51%)" : "hsl(220, 13%, 85%)",
+                        strokeWidth: hasData ? 1.5 : 0.5,
                         outline: "none",
                         cursor: hasData ? "pointer" : "default",
-                        stroke: hasData ? "#fff" : "#94a3b8",
-                        strokeWidth: hasData ? 1.5 : 0.5,
-                        filter: hasData ? "brightness(1.1)" : "none"
+                        filter: hasData ? "brightness(1.05)" : "none"
                       },
                       pressed: {
-                        fill: "#0f172a",
+                        fill: getFillColor(geo),
                         outline: "none"
                       }
                     }}
+                    onMouseEnter={(e) => handleMouseEnter(geo, e)}
+                    onMouseLeave={handleMouseLeave}
+                    onClick={() => handleClick(geo)}
                   />
                 );
               })
@@ -227,46 +287,11 @@ const WorldMap: React.FC<WorldMapProps> = ({ projects, onCountryClick, selectedC
           </Geographies>
         </ZoomableGroup>
       </ComposableMap>
-
-      {/* Legend */}
-      <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-xl border border-gray-200 shadow-lg text-xs z-10">
-        <h4 className="font-bold text-gray-900 mb-2 uppercase tracking-wider text-[10px]">Activity Levels</h4>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-green-500 shadow-sm shadow-green-200"></span>
-            <span className="text-gray-600 font-medium">High Activity</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-yellow-400 shadow-sm shadow-yellow-200"></span>
-            <span className="text-gray-600 font-medium">Medium Activity</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-slate-400"></span>
-            <span className="text-gray-500">Low/Past</span>
-          </div>
-        </div>
-      </div>
-
-      {selectedCountry && (
-        <button
-          onClick={() => {
-            onCountryClick(null);
-            setPosition({ coordinates: [0, 20], zoom: 1 });
-          }}
-          className="absolute top-6 right-6 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 shadow-sm transition-colors flex items-center gap-2 z-10"
-        >
-          <span>Reset View</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
-        </button>
-      )}
-
+      
       {tooltipData && (
         <CountryTooltip data={tooltipData.data} position={tooltipData.position} />
       )}
+      
     </div>
   );
-};
-
-export default WorldMap;
+}

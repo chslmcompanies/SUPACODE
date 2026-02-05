@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js'; // FIXED: Added 'type' keyword
 import Login from './components/Login';
 import KPICards from './components/KPICards';
-import WorldMap from './components/WorldMap';
+import { WorldMap } from './components/WorldMap';
 import SignalTable from './components/SignalTable';
 import ProjectDrawer from './components/ProjectDrawer';
 import type { Project, Stats } from './types';
