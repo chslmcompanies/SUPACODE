@@ -14,7 +14,7 @@ import {
   Search,
   LayoutDashboard,
   Signal,
-  FolderCanvas,
+  Folder,
   Settings,
   LogOut,
   Bell,
@@ -46,7 +46,7 @@ import {
 export const Icons = {
   Dashboard: LayoutDashboard,
   Signals: Signal,
-  Projects: FolderCanvas,
+  Projects: Folder,
   Settings: Settings,
   Logout: LogOut,
   Search: Search,
