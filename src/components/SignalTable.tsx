@@ -1,114 +1,141 @@
 import React, { useState, useMemo } from 'react';
-import { Signal } from '../types';
-import { Search, Filter, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Search, FilterX } from 'lucide-react';
+import { Score } from '../types';
+import type { Project } from '../types';
 
 interface SignalTableProps {
-  signals: Signal[];
-  onSignalClick: (signal: Signal) => void;
+  projects: Project[];
+  onProjectSelect: (project: Project) => void;
 }
 
-const SignalTable: React.FC<SignalTableProps> = ({ signals, onSignalClick }) => {
+const SignalTable: React.FC<SignalTableProps> = ({ projects, onProjectSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  // Logic to filter the signals based on search and dropdown
-  const filteredSignals = useMemo(() => {
-    return signals.filter((signal) => {
-      const matchesSearch = 
-        signal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        signal.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesCategory = 
-        selectedCategory === 'All' || signal.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
+  // 1. Filter Logic: Checks if the search term matches Name, Country, or Operator
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        project.name.toLowerCase().includes(searchLower) ||
+        project.country.toLowerCase().includes(searchLower) ||
+        project.operator.toLowerCase().includes(searchLower)
+      );
     });
-  }, [signals, searchTerm, selectedCategory]);
-
-  // Get unique categories for the dropdown
-  const categories = useMemo(() => {
-    const cats = new Set(signals.map(s => s.category));
-    return ['All', ...Array.from(cats)];
-  }, [signals]);
+  }, [projects, searchTerm]);
 
   return (
-    <div className="bg-[#111111] border border-white/10 rounded-xl overflow-hidden">
-      {/* FILTER BAR SECTION */}
-      <div className="p-4 border-b border-white/10 flex flex-col md:flex-row gap-4 justify-between items-center bg-[#161616]">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      {/* HEADER & SEARCH BAR */}
+      <div className="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <h2 className="font-bold text-gray-800 flex items-center gap-2 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-lime-500 animate-pulse"></span>
+            Priority Signals
+          </h2>
+          <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+            {filteredProjects.length} Result{filteredProjects.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        {/* SEARCH INPUT */}
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
-            placeholder="Search signals or descriptions..."
-            className="w-full bg-black border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            placeholder="Search projects, countries..."
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
-        
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <select 
-            className="bg-black border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <FilterX size={14} />
+            </button>
+          )}
         </div>
       </div>
-
-      {/* TABLE SECTION */}
+      
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-white/10 bg-white/5">
-              <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Category</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Details</th>
+            <tr className="bg-gray-50/80 text-xs text-gray-500 uppercase tracking-wider border-b border-gray-100">
+              <th className="px-6 py-3 font-semibold">Project Name</th>
+              <th className="px-6 py-3 font-semibold">Location</th>
+              <th className="px-6 py-3 font-semibold">Stage / Value</th>
+              <th className="px-6 py-3 font-semibold">Signal Score</th>
+              <th className="px-6 py-3 font-semibold text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
-            {filteredSignals.length > 0 ? (
-              filteredSignals.map((signal) => (
-                <tr 
-                  key={signal.id} 
-                  onClick={() => onSignalClick(signal)}
-                  className="hover:bg-white/5 transition-colors cursor-pointer group"
-                >
-                  <td className="px-6 py-4">
+          <tbody className="divide-y divide-gray-100">
+            {filteredProjects.map((project) => (
+              <tr 
+                key={project.id} 
+                className="hover:bg-gray-50/80 transition-colors cursor-pointer group"
+                onClick={() => onProjectSelect(project)}
+              >
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-100 transition-colors">
+                      <Building2 size={18} />
+                    </div>
                     <div>
-                      <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
-                        {signal.name}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 line-clamp-1">{signal.description}</div>
+                      <div className="font-semibold text-gray-900">{project.name}</div>
+                      <div className="text-xs text-gray-500">{project.operator}</div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {signal.category}
+                  </div>
+                </td>
+                
+                <td className="px-6 py-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-900 flex items-center gap-1.5">
+                      <MapPin size={14} className="text-gray-400" />
+                      {project.country}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${signal.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-500'}`} />
-                      <span className="text-xs text-gray-300 capitalize">{signal.status}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                      <ArrowUpRight className="w-4 h-4 text-gray-500 group-hover:text-white" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
+                    <span className="text-xs text-gray-500 pl-5">{project.region}</span>
+                  </div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-900">{project.build_phase}</span>
+                    <span className="text-xs text-gray-500">{project.est_value} USD</span>
+                  </div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    project.score === Score.HIGH ? 'bg-green-50 text-green-700 border-green-200' :
+                    project.score === Score.MEDIUM ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                    'bg-gray-50 text-gray-600 border-gray-200'
+                  }`}>
+                    {project.score}
+                  </span>
+                </td>
+
+                <td className="px-6 py-4 text-right">
+                  <button className="text-gray-400 hover:text-lime-600 transition-colors">
+                    <ChevronRight size={20} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            
+            {filteredProjects.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500 text-sm">
-                  No signals found matching your filters.
+                <td colSpan={5} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <Search size={24} className="opacity-20" />
+                    <p className="text-sm">No results found for "{searchTerm}"</p>
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="text-xs text-lime-600 font-semibold hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
                 </td>
               </tr>
             )}
