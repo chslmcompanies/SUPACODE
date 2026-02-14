@@ -22,75 +22,38 @@ const mapDbToProject = (data: any): Project => ({
 });
 
 export const fetchProjects = async (): Promise<Project[]> => {
-  console.log(`[Supabase] Attempting to fetch from table: ${TABLE_NAME}`);
-  
-  // 1. Check Session first
-  const { data: sessionData } = await supabase.auth.getSession();
-  console.log('[Supabase] Current Session:', sessionData.session ? 'Active' : 'None');
-
-  // 2. Fetch Data
   const { data, error } = await supabase
     .from(TABLE_NAME)
-    .select('*', { count: 'exact' })
+    .select('*')
     .order('published_date', { ascending: false });
 
-  // 3. Debugging Logs
-  if (error) {
-    console.error(`[Supabase] FATAL ERROR fetching '${TABLE_NAME}':`, error.message, error.details);
-    return [];
-  }
-
-  if (!data || data.length === 0) {
-    console.warn(`[Supabase] WARNING: Request succeeded but returned 0 rows.`);
-    console.warn(`[Supabase] CHECK: 1. Does table '${TABLE_NAME}' have data? 2. Do you have an RLS Policy enabled for 'SELECT'?`);
-    return [];
-  }
-
-  console.log(`[Supabase] SUCCESS: Fetched ${data.length} rows.`);
-  console.log('[Supabase] First row raw data:', data[0]);
-
+  if (error) return [];
   return (data || []).map(mapDbToProject);
 };
 
-export const fetchStats = async (projects?: Project[]): Promise<Stats> => {
-  const sourceData = projects || await fetchProjects();
-  
-  const regions = new Set(sourceData.map(p => p.region));
-  
-  const earlyStage = sourceData.filter(p => {
+export const fetchStats = async (projects: Project[]): Promise<Stats> => {
+  // 1. Planning/FEED Count
+  const planningCount = projects.filter(p => {
     const phase = (p.build_phase || '').toLowerCase();
-    return phase.includes('planning') || 
-           phase.includes('feed') || 
-           phase.includes('concept') || 
-           phase.includes('tender');
+    return phase.includes('planning') || phase.includes('feed');
   }).length;
 
-  const contractorCounts: Record<string, number> = {};
-  sourceData.forEach(p => {
-    if (p.contractor && p.contractor !== 'Unspecified' && p.contractor !== 'None') {
-      contractorCounts[p.contractor] = (contractorCounts[p.contractor] || 0) + 1;
-    }
-  });
+  // 2. New Leads (Last 7 Days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const newLeadsCount = projects.filter(p => new Date(p.published_date) >= sevenDaysAgo).length;
 
-  const sortedContractors = Object.entries(contractorCounts).sort((a, b) => b[1] - a[1]);
-  
-  const topEpc: [string, number] = sortedContractors.length > 0 
-    ? sortedContractors[0] 
-    : ['Various', 0];
+  // 3. Open Opportunities (No Contractor)
+  const openCount = projects.filter(p => 
+    !p.contractor || p.contractor.toLowerCase() === 'unspecified'
+  ).length;
 
   return {
-    early_stage_count: earlyStage,
-    top_epc_name: topEpc[0],
-    top_epc_value: 'High Activity', 
-    active_regions: regions.size
+    early_stage_count: planningCount,
+    active_regions: newLeadsCount,
+    top_epc_name: 'Strategic Focus',
+    top_epc_value: openCount.toString(),
   };
-};
-
-export const signInWithEmail = async (email: string, password: string) => {
-  return await supabase.auth.signInWithPassword({ 
-    email, 
-    password 
-  });
 };
 
 export const signOut = async () => {

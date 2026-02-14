@@ -1,67 +1,69 @@
-import React from 'react';
-import { Target, TrendingUp, Activity, Globe } from 'lucide-react';
-import type { Stats } from '../types';
+import React, { useState } from 'react';
+import { Target, Sparkles, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
+import type { Project, Stats } from '../types';
 
 interface KPICardsProps {
   stats: Stats;
+  projects: Project[];
 }
 
-const KPICards: React.FC<KPICardsProps> = ({ stats }) => {
+const KPICards: React.FC<KPICardsProps> = ({ stats, projects }) => {
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  const getCardDetails = (id: string) => {
+    if (id === 'planning') {
+      return projects.filter(p => (p.build_phase || '').toLowerCase().includes('planning') || (p.build_phase || '').toLowerCase().includes('feed')).slice(0, 3);
+    }
+    if (id === 'new') {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return projects.filter(p => new Date(p.published_date) >= sevenDaysAgo).slice(0, 3);
+    }
+    if (id === 'open') {
+      return projects.filter(p => !p.contractor || p.contractor.toLowerCase() === 'unspecified').slice(0, 3);
+    }
+    return [];
+  };
+
+  const cards = [
+    { id: 'planning', label: 'Planning & FEED', value: stats.early_stage_count, icon: <Target className="w-5 h-5 text-lime-700" />, color: 'bg-lime-50 border-lime-100' },
+    { id: 'new', label: 'New This Week', value: stats.active_regions, icon: <Sparkles className="w-5 h-5 text-blue-700" />, color: 'bg-blue-50 border-blue-100' },
+    { id: 'open', label: 'Open Opportunities', value: stats.top_epc_value, icon: <UserPlus className="w-5 h-5 text-purple-700" />, color: 'bg-purple-50 border-purple-100' }
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {/* Card 1 */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Early Stage Opportunities</p>
-          <h3 className="text-2xl font-bold text-gray-900">{stats.early_stage_count}</h3>
-          <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full mt-2 inline-block">
-            +12% vs last month
-          </span>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <Target className="w-6 h-6 text-blue-600" />
-        </div>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-start">
+      {cards.map((card) => {
+        const isExpanded = expandedCard === card.id;
+        const details = getCardDetails(card.id);
 
-      {/* Card 2 */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Top Contractor (EPC)</p>
-          <h3 className="text-lg font-bold text-gray-900 truncate max-w-[140px]" title={stats.top_epc_name}>
-            {stats.top_epc_name}
-          </h3>
-          <p className="text-xs text-gray-400 mt-1">Value: {stats.top_epc_value}</p>
-        </div>
-        <div className="p-3 bg-purple-50 rounded-lg">
-          <TrendingUp className="w-6 h-6 text-purple-600" />
-        </div>
-      </div>
-
-      {/* Cards 3 */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Active Regions</p>
-          <h3 className="text-2xl font-bold text-gray-900">{stats.active_regions}</h3>
-          <span className="text-xs text-gray-400 mt-2 inline-block">Global Coverage</span>
-        </div>
-        <div className="p-3 bg-amber-50 rounded-lg">
-          <Globe className="w-6 h-6 text-amber-600" />
-        </div>
-      </div>
-
-      {/* Card 4 */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Signal Intensity</p>
-          <h3 className="text-2xl font-bold text-gray-900">High</h3>
-          <span className="text-xs text-lime-600 bg-lime-50 px-2 py-0.5 rounded-full mt-2 inline-block">
-            Optimal Engagement
-          </span>
-        </div>
-        <div className="p-3 bg-lime-50 rounded-lg">
-          <Activity className="w-6 h-6 text-lime-600" />
-        </div>
-      </div>
+        return (
+          <div key={card.id} className={`rounded-2xl border shadow-sm flex flex-col overflow-hidden transition-all ${card.color}`}>
+            <div className="p-5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-white rounded-lg shadow-sm">{card.icon}</div>
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase">{card.label}</p>
+                  <h3 className="text-2xl font-black text-slate-900">{card.value}</h3>
+                </div>
+              </div>
+              <button onClick={() => setExpandedCard(isExpanded ? null : card.id)} className="p-1 hover:bg-white/50 rounded-full">
+                {isExpanded ? <ChevronUp /> : <ChevronDown />}
+              </button>
+            </div>
+            {isExpanded && (
+              <div className="px-5 pb-5 pt-2 space-y-3 bg-white/40 border-t border-black/5">
+                {details.map((p) => (
+                  <div key={p.id} className="flex flex-col border-l-2 border-slate-300 pl-3">
+                    <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
+                    <span className="text-[10px] text-slate-500">{p.operator}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
