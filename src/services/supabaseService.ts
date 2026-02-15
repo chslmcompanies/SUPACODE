@@ -56,6 +56,14 @@ export const fetchStats = async (projects: Project[]): Promise<Stats> => {
   };
 };
 
+// CRITICAL EXPORT: This is what Vercel is complaining about
+export const signInWithEmail = async (email: string, password: string) => {
+  return await supabase.auth.signInWithPassword({ 
+    email, 
+    password 
+  });
+};
+
 export const signOut = async () => {
   return await supabase.auth.signOut();
 };
