@@ -77,40 +77,7 @@ export const fetchStats = async (projects: Project[]): Promise<Stats> => {
     hottest_region_count: hottestRegion[1] as number,
   };
 };
-  // Tile 1 — Contractor Gap: supply chain still open
-  const contractorGap = projects.filter(p => {
-    const c = (p.contractor || '').toLowerCase().trim();
-    return !c || c === 'unspecified' || c === 'tbc' || c === 'tbd' || c === 'n/a' || c === '-' || c === 'unknown';
-  }).length;
-
-  // Tile 2 — High Priority: AI score indicates high value
-  const highPriority = projects.filter(p => {
-    const s = (p.score || '').toLowerCase().trim();
-    const num = parseInt(s, 10);
-    if (!isNaN(num)) return num >= 80;
-    return s === 'high' || s === 'critical' || s === 'a';
-  }).length;
-
-  // Tile 3 — Early Stage: in FEED or planning phase (specification window)
-  const earlyStage = projects.filter(p => {
-    const phase = (p.build_phase || '').toLowerCase();
-    return (
-      phase.includes('feed') ||
-      phase.includes('planning') ||
-      phase.includes('pre-feed') ||
-      phase.includes('concept') ||
-      phase.includes('study') ||
-      phase.includes('pre-front')
-    );
-  }).length;
-
-  return {
-    early_stage_count: highPriority,   // Tile 2
-    active_regions: earlyStage,         // Tile 3
-    top_epc_name: 'Strategic Focus',
-    top_epc_value: contractorGap.toString(), // Tile 1
-  };
-};
+ 
 
 // CRITICAL EXPORT: This is what Vercel is complaining about
 export const signInWithEmail = async (email: string, password: string) => {
