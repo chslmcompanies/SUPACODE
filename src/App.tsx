@@ -38,16 +38,15 @@ const App: React.FC = () => {
     }
   }, [session]);
 
+  const toDateStr = (d: Date) => d.toISOString().split('T')[0];
+
   const kpiProjects = useMemo(() => {
     if (!kpiDateRange.start && !kpiDateRange.end) return projects;
     return projects.filter(p => {
-      const d = new Date(p.published_date);
-      if (kpiDateRange.start && d < kpiDateRange.start) return false;
-      if (kpiDateRange.end) {
-        const endOfDay = new Date(kpiDateRange.end);
-        endOfDay.setHours(23, 59, 59, 999);
-        if (d > endOfDay) return false;
-      }
+      const d = p.published_date?.slice(0, 10);
+      if (!d) return true;
+      if (kpiDateRange.start && d < toDateStr(kpiDateRange.start)) return false;
+      if (kpiDateRange.end && d > toDateStr(kpiDateRange.end)) return false;
       return true;
     });
   }, [projects, kpiDateRange]);
