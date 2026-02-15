@@ -27,8 +27,10 @@ export interface Project {
 }
 
 export interface Stats {
-  early_stage_count: number;
-  top_epc_name: string;
-  top_epc_value: string;
-  active_regions: number;
+  contractor_gap: number;
+  high_priority: number;
+  feed_count: number;
+  tender_count: number;
+  hottest_region: string;
+  hottest_region_count: number;
 }

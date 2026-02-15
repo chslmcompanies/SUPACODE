@@ -1,69 +1,103 @@
-import React, { useState } from 'react';
-import { Target, Sparkles, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
-import type { Project, Stats } from '../types';
+import React from 'react';
+import { Unlock, Sparkles, Layers, Flame } from 'lucide-react';
+import type { Stats } from '../types';
 
 interface KPICardsProps {
   stats: Stats;
-  projects: Project[];
 }
 
-const KPICards: React.FC<KPICardsProps> = ({ stats, projects }) => {
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
-
-  const getCardDetails = (id: string) => {
-    if (id === 'planning') {
-      return projects.filter(p => (p.build_phase || '').toLowerCase().includes('planning') || (p.build_phase || '').toLowerCase().includes('feed')).slice(0, 3);
-    }
-    if (id === 'new') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      return projects.filter(p => new Date(p.published_date) >= sevenDaysAgo).slice(0, 3);
-    }
-    if (id === 'open') {
-      return projects.filter(p => !p.contractor || p.contractor.toLowerCase() === 'unspecified').slice(0, 3);
-    }
-    return [];
-  };
-
-  const cards = [
-    { id: 'planning', label: 'Planning & FEED', value: stats.early_stage_count, icon: <Target className="w-5 h-5 text-lime-700" />, color: 'bg-lime-50 border-lime-100' },
-    { id: 'new', label: 'New This Week', value: stats.active_regions, icon: <Sparkles className="w-5 h-5 text-blue-700" />, color: 'bg-blue-50 border-blue-100' },
-    { id: 'open', label: 'Open Opportunities', value: stats.top_epc_value, icon: <UserPlus className="w-5 h-5 text-purple-700" />, color: 'bg-purple-50 border-purple-100' }
-  ];
-
+const KPICards: React.FC<KPICardsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-start">
-      {cards.map((card) => {
-        const isExpanded = expandedCard === card.id;
-        const details = getCardDetails(card.id);
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
-        return (
-          <div key={card.id} className={`rounded-2xl border shadow-sm flex flex-col overflow-hidden transition-all ${card.color}`}>
-            <div className="p-5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-white rounded-lg shadow-sm">{card.icon}</div>
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase">{card.label}</p>
-                  <h3 className="text-2xl font-black text-slate-900">{card.value}</h3>
-                </div>
-              </div>
-              <button onClick={() => setExpandedCard(isExpanded ? null : card.id)} className="p-1 hover:bg-white/50 rounded-full">
-                {isExpanded ? <ChevronUp /> : <ChevronDown />}
-              </button>
+      {/* Card 1 — Contractor Gap */}
+      <div className="rounded-2xl border border-lime-100 bg-lime-50 shadow-sm p-5 flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-lime-100 shrink-0">
+          <Unlock className="w-5 h-5 text-lime-700" />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+            Contractor Gap
+          </p>
+          <h3 className="text-3xl font-black text-slate-900 leading-none my-1">
+            {stats.contractor_gap}
+          </h3>
+          <p className="text-xs text-slate-400">
+            Projects with no contractor assigned
+          </p>
+        </div>
+      </div>
+
+      {/* Card 2 — High Priority */}
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 shadow-sm p-5 flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-blue-100 shrink-0">
+          <Sparkles className="w-5 h-5 text-blue-700" />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+            High Priority
+          </p>
+          <h3 className="text-3xl font-black text-slate-900 leading-none my-1">
+            {stats.high_priority}
+          </h3>
+          <p className="text-xs text-slate-400">
+            FEED, Tender stage or Greenfield
+          </p>
+        </div>
+      </div>
+
+      {/* Card 3 — Phase Breakdown */}
+      <div className="rounded-2xl border border-purple-100 bg-purple-50 shadow-sm p-5 flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-purple-100 shrink-0">
+          <Layers className="w-5 h-5 text-purple-700" />
+        </div>
+        <div className="flex-1">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+            Phase Breakdown
+          </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                FEED
+              </p>
+              <p className="text-2xl font-black text-slate-900 leading-none">
+                {stats.feed_count}
+              </p>
             </div>
-            {isExpanded && (
-              <div className="px-5 pb-5 pt-2 space-y-3 bg-white/40 border-t border-black/5">
-                {details.map((p) => (
-                  <div key={p.id} className="flex flex-col border-l-2 border-slate-300 pl-3">
-                    <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
-                    <span className="text-[10px] text-slate-500">{p.operator}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="w-px h-8 bg-purple-200" />
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Tender
+              </p>
+              <p className="text-2xl font-black text-slate-900 leading-none">
+                {stats.tender_count}
+              </p>
+            </div>
           </div>
-        );
-      })}
+          <p className="text-xs text-slate-400 mt-1">
+            Early stage specification windows
+          </p>
+        </div>
+      </div>
+
+      {/* Card 4 — Hottest Region */}
+      <div className="rounded-2xl border border-orange-100 bg-orange-50 shadow-sm p-5 flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-orange-100 shrink-0">
+          <Flame className="w-5 h-5 text-orange-600" />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+            Hottest Region
+          </p>
+          <h3 className="text-xl font-black text-slate-900 leading-tight my-1">
+            {stats.hottest_region}
+          </h3>
+          <p className="text-xs text-slate-400">
+            {stats.hottest_region_count} signals · most active region
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 };
