@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Project, Stats } from '../types';
 
-const TABLE_NAME = 'signals'; 
+const TABLE_NAME = 'signals';
 
 const mapDbToProject = (data: any): Project => ({
   id: data.id,
@@ -49,14 +49,13 @@ export const fetchStats = async (projects: Project[]): Promise<Stats> => {
 
   // Card 3 — Phase Breakdown
   const feedCount = projects.filter(p =>
-    (p.build_phase || '').toLowerCase().includes('planning/feed') ||
-    (p.build_phase || '').toLowerCase().includes('planning') ||
-    (p.build_phase || '').toLowerCase().includes('feed')
+    (p.lifecycle || '').toLowerCase().includes('planning') ||
+    (p.lifecycle || '').toLowerCase().includes('feed')
   ).length;
 
   const tenderCount = projects.filter(p =>
-    (p.build_phase || '').toLowerCase().includes('tender') ||
-    (p.build_phase || '').toLowerCase().includes('itt')
+    (p.lifecycle || '').toLowerCase().includes('tender') ||
+    (p.lifecycle || '').toLowerCase().includes('itt')
   ).length;
 
   // Card 4 — Hottest Region
@@ -77,13 +76,11 @@ export const fetchStats = async (projects: Project[]): Promise<Stats> => {
     hottest_region_count: hottestRegion[1] as number,
   };
 };
- 
 
-// CRITICAL EXPORT: This is what Vercel is complaining about
 export const signInWithEmail = async (email: string, password: string) => {
-  return await supabase.auth.signInWithPassword({ 
-    email, 
-    password 
+  return await supabase.auth.signInWithPassword({
+    email,
+    password
   });
 };
 
