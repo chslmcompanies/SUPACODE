@@ -11,14 +11,17 @@ const mapDbToProject = (data: any): Project => ({
   asset_type: data.asset_type || 'Other',
   score: data.score || 'Low',
   published_date: data.published_date,
-  est_value: 'Undisclosed', 
-  build_phase: data.lifecycle || data.build_phase || 'Unspecified',
+  est_value: 'Undisclosed',
+  build_phase: data.build_phase || 'Unspecified',
+  lifecycle: data.lifecycle || '',
+  time_horizon: data.time_horizon || '',
   operator: data.operator || 'Unspecified',
   contractor: data.primary_contractor || 'Unspecified',
   description: data.project_description || '',
-  opportunity: data.adhesives_opportunities || 'No specific opportunities listed.',
+  opportunity: data.adhesives_opportunities || '',
+  technical_trigger: data.technical_trigger || '',
   url: data.url,
-  urgency: data.urgency
+  urgency: data.urgency,
 });
 
 export const fetchProjects = async (): Promise<Project[]> => {
