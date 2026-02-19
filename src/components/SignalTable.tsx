@@ -36,7 +36,6 @@ function scoreColor(score: string) {
 
 // Excel-style column filter dropdown
 function ColFilterDropdown({
-  colKey,
   allValues,
   selected,
   onToggle,
@@ -64,7 +63,7 @@ function ColFilterDropdown({
   }, [onClose]);
 
   const filtered = allValues.filter(v => v.toLowerCase().includes(search.toLowerCase()));
-  const allSelected = selected.size === 0; // 0 = no filter = show all
+//  const allSelected = selected.size === 0; // 0 = no filter = show all
 
   return (
     <div
