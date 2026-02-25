@@ -191,10 +191,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-```
-
-Paste this into your `Login.tsx`, save, then run the git commands in terminal:
-```
-git add .
-git commit -m "Redesign login page"
-git push
