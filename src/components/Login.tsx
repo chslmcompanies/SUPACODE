@@ -63,12 +63,12 @@ const Login: React.FC = () => {
       </div>
 
       {/* ═══════════ RIGHT SIDE — 40% — Login Form ═══════════ */}
-      <div className="w-full lg:w-[40%] flex flex-col items-center justify-center bg-white px-6 py-12 relative">
+      <div className="w-full lg:w-[40%] flex flex-col items-center justify-center bg-[#f8fafc] px-6 py-12 relative">
 
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <img
-            src="/logo-icon.png"
+            src="/Logo-icon.png"
             alt="Clarion Icon"
             className="h-16 w-auto mb-4"
           />
@@ -180,9 +180,19 @@ const Login: React.FC = () => {
         </form>
 
         {/* Mobile-only: show definition below form */}
-        <div className="lg:hidden mt-10 text-center px-4">
-          <p className="text-xs text-gray-400 leading-relaxed">
-            <span className="font-semibold">CLARION</span> /ˈkler.i.ən/ — (1) a medieval trumpet used to signal troops on the battlefield (2) Automated market intelligence for early-lead signals
+        <div className="lg:hidden mt-10 px-4">
+          <h3 className="text-lg font-black text-slate-900 mb-3 text-center">
+            CLARION <span className="text-sm font-normal text-slate-500">/ˈkler.i.ən/</span>
+          </h3>
+          <p className="text-sm text-slate-800 mb-2">
+            <span className="font-semibold text-slate-500 italic">(1) noun</span>
+            <span className="mx-1.5 text-slate-300">—</span>
+            a medieval trumpet used to signal troops on the battlefield
+          </p>
+          <p className="text-sm text-slate-800">
+            <span className="font-semibold text-slate-500 italic">(2)</span>
+            <span className="mx-1.5 text-slate-300">—</span>
+            Automated market intelligence for early-lead signals
           </p>
         </div>
       </div>
